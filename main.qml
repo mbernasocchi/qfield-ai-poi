@@ -15,7 +15,10 @@ Item {
   Settings {
     id: settings
     property string api_url: "https://api.openai.com/v1/chat/completions"
+    property string api_model: "gpt-4o"
     property string api_key
+    property string prompt_prefix: "List interesting tourist attractions near"
+    
   }
 
   property var mainWindow: iface.mainWindow()
@@ -41,11 +44,6 @@ Item {
   }
 
   function fetchAnswer() {
-    let parameters = {
-      "api_url": settings.api_url,
-      "service_crs": "EPSG:4326",
-      "api_key": settings.api_key
-    }
 
     let position = positionSource.positionInformation
     if (positionSource.active && position.latitudeValid && position.longitudeValid) {
@@ -57,26 +55,25 @@ Item {
     
     console.log('Fetching results....');
 
-    let prompt = `List interesting tourist attractions near latitude ${position.latitude} and longitude ${position.longitude}.`;
+    let prompt = `${settings.prompt_prefix} latitude ${position.latitude} and longitude ${position.longitude}.`;
     console.log(prompt);  
-    //let prompt = `List interesting tourist attractions near rio de janeiro.`;
+
     let requestData = {
-    model: "gpt-3.5-turbo",
-    messages: [
-        { role: "developer", content: "You should always return valid geojson only" },
-        {
-            role: "user", content: prompt,
-        },
-    ],
-    response_format: {
-        // could also use /docs/guides/structured-outputs
-        type: "json_object",
-        }
-    }
+      model: settings.api_model,
+      messages: [
+          { role: "developer", content: "You should always return valid geojson only" },
+          {
+              role: "user", content: prompt,
+          },
+      ],
+      response_format: {
+          // could also use /docs/guides/structured-outputs
+          type: "json_object",
+          }
+      }
 
 
     let request = new XMLHttpRequest();
-    console.log(`Bearer ${parameters["api_key"]}`);
     
     request.onreadystatechange = function() {
       if (request.readyState === XMLHttpRequest.DONE) {
@@ -94,8 +91,8 @@ Item {
       }
     }
     //let viewbox = GeometryUtils.reprojectRectangle(context.targetExtent, context.targetExtentCrs, CoordinateReferenceSystemUtils.fromDescription(parameters["service_crs"])).toString().replace(" : ", ",")
-    request.open("POST", parameters["api_url"], true);
-    request.setRequestHeader("Authorization", `Bearer ${parameters["api_key"]}`);
+    request.open("POST", settings.api_url, true);
+    request.setRequestHeader("Authorization", `Bearer ${settings.api_key}`);
     request.setRequestHeader("Content-Type", "application/json");
     request.send(JSON.stringify(requestData));
   }
@@ -113,6 +110,7 @@ Item {
         y: (mainWindow.height - height) / 2
 
         ColumnLayout {
+            width: parent.width
             spacing: 10
             Label {
                 id: labelApiUrl
@@ -136,12 +134,36 @@ Item {
                 Layout.fillWidth: true
                 text: settings.api_key
             }
+            Label {
+                id: labelApiModel
+                Layout.fillWidth: true
+                text: qsTr("API Model")
+            }
+
+            QfTextField {
+                id: textFieldApiModel
+                Layout.fillWidth: true
+                text: settings.api_model
+            }
+
+            Label {
+                id: labelPrompPrefix
+                Layout.fillWidth: true
+                text: qsTr("Prompt prefix (current Lat/Lon will be added automatically)")
+            }
+
+            QfTextField {
+                id: textFieldPromptPrefix
+                Layout.fillWidth: true
+                text: settings.prompt_prefix
+            }
             
         }
 
         onAccepted: {
             settings.api_key = textFieldApiKey.text;
             settings.api_url = textFieldApiUrl.text;
+            settings.prompt_prefix = textFieldPromptPrefix.text;
             mainWindow.displayToast(qsTr("Settings stored"));
         }
     }
