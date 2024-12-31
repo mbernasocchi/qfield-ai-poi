@@ -46,18 +46,20 @@ Item {
   function fetchAnswer() {
 
     let position = positionSource.positionInformation
+    let prompt = `${settings.prompt_prefix} latitude ${position.latitude} and longitude ${position.longitude}.`;
+    console.log(prompt);    
+
     if (positionSource.active && position.latitudeValid && position.longitudeValid) {
-      mainWindow.displayToast(qsTr('Your current position is ' + position.latitude + ', ' +position.longitude))
-    } else {
+      mainWindow.displayToast(prompt)
+    } 
+    else {
       mainWindow.displayToast(qsTr('Your current position is unknown\n Not loading POIs nearby'))
       return;
     }
     
     console.log('Fetching results....');
 
-    let prompt = `${settings.prompt_prefix} latitude ${position.latitude} and longitude ${position.longitude}.`;
-    console.log(prompt);  
-
+    
     let requestData = {
       model: settings.api_model,
       messages: [
