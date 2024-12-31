@@ -1,0 +1,7 @@
+[general]
+name=POI AI
+description=Plugin to load POI around the current location
+author=marco@OPENGIS.ch
+icon=icon.svg
+version=0.0.1
+homepage=https://www.opengis.ch/
